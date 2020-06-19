@@ -641,9 +641,3 @@ def main( mario_source_dir, mario_graphics_dir ):
     print( "Level fixes applied." )
 
 
-
-if __name__ == "__main__":
-
-    mario_source_dir = Path( '/home/seph/mario_source/sm64/' )
-    mario_graphics_dir = Path( '/home/seph/game_practice/mario_64_graphics/' )
-    main( mario_source_dir, mario_graphics_dir )

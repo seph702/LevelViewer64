@@ -90,6 +90,11 @@ Level Viewer 64 uses text parsing to read through the sm64 decomp source code.  
 - The red deathpit sand in Shifting Sand Land looks wrong?
 
 
+### Known Nonissues
+
+- Some objects are in strange places.  There are signs and Bob-ombs floating in the air and Goombas and 1-up mushrooms partially in the ground.  Level Viewer 64 accurately displays how objects are placed in the Mario 64 source code.  For all of these objects, their behavior functions in the original source code check collision and make the object fall to the ground.  So when a level is loaded, a sign might be floating in the air, but a frame later, it is in its normal spot on the ground.
+
+
 ### Future Work?
 
 While I'm burned out on this project right now, here's a wishlist of things I didn't get to implement that could possibly arrive at some point in the future:

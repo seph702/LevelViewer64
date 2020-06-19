@@ -22,6 +22,19 @@ except:
     print( "Please install numpy for python.  This project uses numpy as the backend for its 3D matrix math.  You can install it using:\npip install numpy\n" )
     sys.exit()
 
+from parsers import texture_parser
+from parsers import model_id_parser
+from parsers import level_script_parser
+from parsers import gfx_from_geo_parser
+from parsers import paintings_parser
+from parsers import model_parser
+from parsers import skybox_extender
+from parsers import geo_parser
+from parsers import level_fixes
+from parsers import movtex_tri_parser
+
+
+
 
 mario_source_dir = Path( '' )
 while not os.path.isfile( mario_source_dir / 'extract_assets.py' ):
@@ -35,49 +48,7 @@ mario_graphics_dir = Path( os.path.realpath( __file__ ) ).parent
 parser_dir = mario_graphics_dir / 'parsers'
 pickle_dir = mario_graphics_dir / 'pickles'
 
-############################
 
-def fix_variable_lines_in_main( filepath, variable_arr ):
-    """variable_arr is an array of arrays, where each subarray is of length two and contains two strings.  The first string is a variable name and the second string is the new value to set the variable to."""
-
-    with open( filepath, 'r' ) as f:
-        textlines = f.read().splitlines()
-
-    for ind, line in enumerate( textlines ):
-        if '__name__' in line and '__main__' in line:
-            main_ind = ind
-            break
-
-    ind = main_ind
-    for i in range( len( variable_arr ) ):
-        variable_arr[ i ][ 0 ] += ' ='
-    while ind < len( textlines ):
-        curr_line = textlines[ ind ]
-        for each_variable in variable_arr:
-            if each_variable[ 0 ] in curr_line:
-                textlines[ ind ] = curr_line[ : curr_line.find( '=' ) + 1 ] + ' ' + each_variable[ 1 ]
-
-        ind += 1
-
-    with open( filepath, 'w' ) as f:
-        for line in textlines:
-            f.write( line )
-            f.write( '\n' )
-
-
-
-############################
-
-from parsers import texture_parser
-from parsers import model_id_parser
-from parsers import level_script_parser
-from parsers import gfx_from_geo_parser
-from parsers import paintings_parser
-from parsers import model_parser
-from parsers import skybox_extender
-from parsers import geo_parser
-from parsers import level_fixes
-from parsers import movtex_tri_parser
 
 print( "Beginning setup.\n" )
 
@@ -122,38 +93,5 @@ print( "\n", end='' )
 print( "Performing level fixes." )
 level_fixes.main( mario_source_dir, pickle_dir )
 print( "\n", end='' )
-
-## Edit main.py to replace mario_source_dir and mario_graphics_dir variables with the variables at the top of this file.
-print( "Editing scripts to use user supplied source code path." )
-source_path_str = repr( mario_source_dir ).split( '\'' )[ 1 ]
-new_source_str = "Path( '" + source_path_str + "' )"
-graphics_path_str = repr( mario_graphics_dir ).split( '\'' )[ 1 ]
-new_graphics_str = "Path( '" + graphics_path_str + "' )"
-
-variables_to_fix = [ [ 'mario_source_dir', new_source_str ], [ 'mario_graphics_dir', new_graphics_str ] ]
-
-print( "Editing main.py." )
-fix_variable_lines_in_main( mario_graphics_dir / 'main.py', variables_to_fix )
-print( "Editing model_id_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'model_id_parser.py', variables_to_fix )
-print( "Editing texture_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'texture_parser.py', variables_to_fix )
-print( "Editing level_script_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'level_script_parser.py', variables_to_fix )
-print( "Editing paintings_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'paintings_parser.py', variables_to_fix )
-print( "Editing model_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'model_parser.py', variables_to_fix )
-print( "Editing skybox_extender.py." )
-fix_variable_lines_in_main( parser_dir / 'skybox_extender.py', variables_to_fix )
-print( "Editing gfx_from_geo_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'gfx_from_geo_parser.py', variables_to_fix )
-print( "Editing movtex_tri_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'movtex_tri_parser.py', variables_to_fix )
-print( "Editing geo_parser.py." )
-fix_variable_lines_in_main( parser_dir / 'geo_parser.py', variables_to_fix )
-print( "Editing level_fixes.py." )
-fix_variable_lines_in_main( parser_dir / 'level_fixes.py', variables_to_fix )
-print( "Editing complete.\n" )
 
 print( "Setup complete!  Run main.py and have fun!" )

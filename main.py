@@ -7,7 +7,7 @@ from game_window import GameWindow
 
 if __name__ == '__main__':
 
-    mario_graphics_dir = Path( '/home/seph/game_practice/mario_64_graphics' )
+    mario_graphics_dir = Path( os.path.realpath( __file__ ) ).parent
 
     font_filename = 'super-mario-64.ttf'
     font_name = 'Super Mario 64'
