@@ -99,7 +99,7 @@ While I'm burned out on this project right now, here's a wishlist of things I di
 - Implement some missing objects?  Pokeys, Wiggler's body, coin rings, coin lines, the ferris wheel platforms in the Bowser levels, etc. are all spawned in the game by behavior functions rather than by typical object placement.  It would be nice to implement a few more of these behavior functions.  Some parts of levels look empty without all of the coins of coin rings and lines.
 - Implement a font layout class.  The Mario 64 font letters are in textures that are dumped from the ROM.  A layout class would allow the use of the font directly from the game and remove the reliance on the fan-made font.
 - Add parsing for the few unimplemented Geo graph nodes.
-- Rewrite a couple of the parsers that are not well written.  Probably refactor the menus too.
+- Completely rewrite a couple of the parsers that are not well written.  Probably refactor the menus too.
 - Make moving textures move.
 - Make animations animate.
 
