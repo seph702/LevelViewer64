@@ -5,13 +5,13 @@ Level Viewer 64 is an unofficial fan project.  **No official assets are included
 
 ### Current Features
 - Includes all levels from Super Mario 64 including Castle Grounds, Castle Inside, all 15 regular levels, all Bowser levels, cap switch levels, and more!
-- All areas of the level are loaded simultaneously (unlike in the original game) and placed manually to remove all transitions between areas.
+- All areas of a level are loaded simultaneously (unlike in the original game) and placed manually to remove all transitions between areas.
 - Lighting works just as it does in the original game.
 - All waterboxes and moving textures are correctly placed and displayed.
 - Nearly all objects and models are correctly placed and sized.
 - Flying first person camera with noclip.
 - Title Menu with a small Easter egg.
-- Level Select menu to quickly and easily change levels.
+- Level Select menu to quickly change levels.
 - Options Menu with options to toggle textures, skybox, and wireframe as well as sliders for field-of-view and mouse sensitivity.
 - Almost all graphics rendering is perfectly accurate to the original.  Even complicated things such as the sheets of transparent ice inside the igloo in Snowman's Land work properly.
 
@@ -86,7 +86,7 @@ Level Viewer 64 uses text parsing to read through the sm64 decomp source code.  
 - Sizes of Piranha Plants and Koopas in Tiny Huge Island are wrong.
 - The Ukiki model (in Tall Tall Mountain) doesn't display correctly.  This is caused by incomplete Geo parsing.
 - Colours are slightly wrong in a few places leading to undesired graphics behavior like with the eyes of Boos and Penguins.  The Nintendo 64 colour combiner is surprisingly customizable while legacy OpenGL's is not.
-- A lot of objects are missing.  Everything has been fully parsed out of the level scripts, so anything that is still missing is loaded in Mario 64 source code by custom behavior functions.  These behaviors functions would have to be manually read, understood, and reimplemented one by one.
+- Some objects are missing.  Everything has been fully parsed out of the level scripts, so anything that is still missing is loaded in Mario 64 source code by object behavior functions.  These behaviors functions cannot be parsed and so would have to be manually read, understood, and reimplemented one by one.
 - The red deathpit sand in Shifting Sand Land looks wrong?
 
 
@@ -95,10 +95,10 @@ Level Viewer 64 uses text parsing to read through the sm64 decomp source code.  
 While I'm burned out on this project right now, here's a wishlist of things I didn't get to implement that could possibly arrive at some point in the future:
 
 - pyglet 2.0 will remove support for legacy OpenGL and add support for modern OpenGL, including shaders.  This means that in 2.0 I can write shaders to perfectly recreate the Nintendo 64's colours and remove the remaining few rendering issues.  This should also provide a significant performance boost.
-- Implement billboarding.  Some objects (such as trees and the body of Bob-ombs) are paper thin.  This is true in Super Mario 64 as well, but they always rotate so that they're facing the camera.  This is a cheat to cause a 3D effect.
+- Implement billboarding.  Some objects (such as trees and the body of Bob-ombs) are paper thin.  This is true in Super Mario 64 as well, but they always rotate so that they're facing the camera.  This is a cheat to cause a 3D effect.  Because of the way this project currently uses legacy OpenGL, billboarding would actually be much simpler to implement with a shader and hence in pyglet 2.0.
 - Implement some missing objects?  Pokeys, Wiggler's body, coin rings, coin lines, the ferris wheel platforms in the Bowser levels, etc. are all spawned in the game by behavior functions rather than by typical object placement.  It would be nice to implement a few more of these behavior functions.  Some parts of levels look empty without all of the coins of coin rings and lines.
 - Implement a font layout class.  The Mario 64 font letters are in textures that are dumped from the ROM.  A layout class would allow the use of the font directly from the game and remove the reliance on the fan-made font.
-- Add parsing for the few unimplemented Geo nodes.
+- Add parsing for the few unimplemented Geo graph nodes.
 - Rewrite a couple of the parsers that are not well written.  Probably refactor the menus too.
 - Make moving textures move.
 - Make animations animate.
@@ -112,4 +112,4 @@ Thanks to the developers of [pyglet](http://pyglet.org/).  "pyglet is a powerful
 
 Thanks to [aztecwarrior28](https://fontstruct.com/fontstructors/1606234/aztecwarrior28) for the [fan-made font](https://fontstruct.com/fontstructions/show/1770031/super-mario-64-8).
 
-Thanks to Michelle for the beta testing and programming discussions.
+Thanks to Michelle for beta testing and for the programming discussions.

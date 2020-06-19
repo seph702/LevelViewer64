@@ -634,6 +634,10 @@ def main( mario_source_dir, mario_graphics_dir ):
     with open( mario_graphics_dir / 'obj_geo_dicts.pickle', 'wb' ) as f:
         pickle.dump( [ obj_name_to_geo_dict, geo_dict ], f, pickle.HIGHEST_PROTOCOL )
 
+    with open( mario_graphics_dir / 'game_dicts.pickle', 'wb' ) as f:
+        pickle.dump( [ level_scripts, geo_dict, gfx_display_dict, texture_dict, obj_name_to_geo_dict, special_dict ], f, pickle.HIGHEST_PROTOCOL )
+
+
     print( "Level fixes applied." )
 
 

@@ -1,5 +1,6 @@
 import math
 import pyglet
+import pickle
 from pyglet.gl import *
 
 from parsers.level_script_parser import LevelScript, LevelGeo, LevelGeoDisplayList, Area, Obj, WaterBox
@@ -14,9 +15,13 @@ from groups import TextureEnableGroup, TextureBindGroup, Layer0Group, Layer1Grou
 
 
 class Geometry():
-    def __init__( self ):
+    def __init__( self, mario_graphics_dir ):
+        self.mario_graphics_dir = mario_graphics_dir
+        self.load_dicts()
+
         self.layer_dict = { 'LAYER_FORCE' : 0, 'LAYER_OPAQUE' : 1, 'LAYER_OPAQUE_DECAL' : 2, 'LAYER_OPAQUE_INTER' : 3, 'LAYER_ALPHA' : 4, 'LAYER_TRANSPARENT' : 5, 'LAYER_TRANSPARENT_DECAL' : 6, 'LAYER_TRANSPARENT_INTER' : 7 }
         self.reverse_layer_dict = { 0: 'LAYER_FORCE', 1: 'LAYER_OPAQUE', 2: 'LAYER_OPAQUE_DECAL', 3: 'LAYER_OPAQUE_INTER', 4: 'LAYER_ALPHA', 5: 'LAYER_TRANSPARENT', 6: 'LAYER_TRANSPARENT_DECAL', 7: 'LAYER_TRANSPARENT_INTER' }
+
         self.batch = None
         self.texture_atlas = None
         ## We don't want to create new texture groups for the same texture, so we'll make a texture_group_dict which has keys texture_filename and values TextureBindGroup
@@ -25,8 +30,15 @@ class Geometry():
         self.build_groups()
 
 
+    def load_dicts( self ):
+        pickle_dir = self.mario_graphics_dir / 'pickles'
+
+        with open( pickle_dir / 'game_dicts.pickle', 'rb' ) as f:
+            self.level_scripts, self.geo_dict, self.gfx_display_dict, self.texture_dict, self.obj_name_to_geo_dict, self.special_dict = pickle.load( f )
+
+
     def build_groups( self ):
-        ## Creates the two top levels of the group structure: the layer ( draw order ) groups and texture enable groups.
+        ## Creates the two top levels of the group structure: the layer ( draw order ) groups and texture enable groups for each layer.
         self.layer0group = Layer0Group()
         self.layer1group = Layer1Group()
         self.layer2group = Layer2Group()
@@ -55,13 +67,13 @@ class Geometry():
         copyright_dl = 'intro_seg7_dl_0700C6A0'
 
         ## Add logo to batch.
-        for each_gfx_draw_list in gfx_display_dict[ logo_dl ]:
+        for each_gfx_draw_list in self.gfx_display_dict[ logo_dl ]:
             current_layer = 'LAYER_OPAQUE'
             current_transformation = util_math.identity_mat()
             self.add_drawlist_to_batch( each_gfx_draw_list, current_layer, current_transformation )
 
         ## Add copyright to batch.
-        for each_gfx_draw_list in gfx_display_dict[ copyright_dl ]:
+        for each_gfx_draw_list in self.gfx_display_dict[ copyright_dl ]:
             if each_gfx_draw_list.name == 'intro_seg7_vertex_0700B420':
                 current_layer = 'LAYER_OPAQUE'
                 current_transformation = util_math.identity_mat()
@@ -74,20 +86,20 @@ class Geometry():
         if 'LEVEL_GEOMETRY' in obj.model or 'special_level_geo' in obj.model:
             if obj.type == 'SPECIAL_OBJECT':
                 try:
-                    geo_name = level_to_load.level_geo[ special_dict[ obj.model ] ]
+                    geo_name = level_to_load.level_geo[ self.special_dict[ obj.model ] ]
                     geo_to_load = level_to_load.geo_dict[ geo_name ]
                 except:
-                    geo_name = obj_name_to_geo_dict[ obj.model ]
-                    geo_to_load = geo_dict[ geo_name ]
+                    geo_name = self.obj_name_to_geo_dict[ obj.model ]
+                    geo_to_load = self.geo_dict[ geo_name ]
             else:
                 geo_name = level_to_load.level_geo[ obj.model ]
                 geo_to_load = level_to_load.geo_dict[ geo_name ]
             self.process_geo_to_batch( geo_to_load, current_area_offset, obj_position=obj.position, obj_rotation=obj.angle )
         else:
             try:
-                geo_name = obj_name_to_geo_dict[ obj.model ]
+                geo_name = self.obj_name_to_geo_dict[ obj.model ]
                 extra_scale = get_extra_scale( obj.model, obj.beh, obj.behParam, geo_name ) or 1.0
-                geo_to_load = geo_dict[ geo_name ]
+                geo_to_load = self.geo_dict[ geo_name ]
                 self.process_geo_to_batch( geo_to_load, current_area_offset, obj_position=obj.position, obj_rotation=obj.angle, obj_scale=extra_scale )
             except Exception as e:
                 pass
@@ -102,7 +114,7 @@ class Geometry():
         self.texture_atlas_dict = {}
         self.texture_group_dict = {}
 
-        level_to_load = level_scripts[ level ]
+        level_to_load = self.level_scripts[ level ]
         for area in level_to_load.areas:
             current_area_offset = area.offset
 
@@ -115,7 +127,7 @@ class Geometry():
             for each_obj in area.objs_with_acts:
                 self.load_object( each_obj, level_to_load, current_area_offset )
 
-            ## Next, load any plain objects.
+            ## Next, load any objects.
             for each_obj in area.objs:
                 self.load_object( each_obj, level_to_load, current_area_offset )
 
@@ -170,7 +182,7 @@ class Geometry():
 
             transformation_mat = transform @ obj_scale_mat @ obj_rot_y @ obj_rot_x @ obj_rot_z @ translate_mat
 
-            for each_gfx_draw_list in gfx_display_dict[ each_geo_dl.dl_name ]:
+            for each_gfx_draw_list in self.gfx_display_dict[ each_geo_dl.dl_name ]:
                 ## Values in gfx_draw_dict are GfxDrawLists, which have attributes render_settings, positions, triangles, texel_coordinates, and colors.
                 if each_geo_dl.billboard and current_layer != 'LAYER_ALPHA' and each_gfx_draw_list.render_settings.geometry_mode[ 'G_LIGHTING' ] == True:
                     print( each_geo_dl.dl_name, each_geo_dl.layer, each_gfx_draw_list.render_settings.geometry_mode )
@@ -186,8 +198,8 @@ class Geometry():
 
         if current_texture_enable:
 
-            if texture_dict.get( gfx_draw_list.render_settings.current_texture ) is not None:
-                texture_filename = texture_dict[ gfx_draw_list.render_settings.current_texture ]
+            if self.texture_dict.get( gfx_draw_list.render_settings.current_texture ) is not None:
+                texture_filename = self.texture_dict[ gfx_draw_list.render_settings.current_texture ]
                 if self.texture_group_dict.get( texture_filename ):
                     current_texture_info = self.texture_group_dict[ texture_filename ]
                     current_texture = current_texture_info[ 0 ]
@@ -223,17 +235,17 @@ class Geometry():
                     glBindTexture( GL_TEXTURE_2D, current_texture.id )
 
                     if 'G_TX_CLAMP' in s_setting:
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE )
+                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE )
                     elif 'G_TX_MIRROR' in s_setting:
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT )
+                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT )
                     else:
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT )
+                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT )
                     if 'G_TX_CLAMP' in t_setting:
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE )
+                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE )
                     elif 'G_TX_MIRROR' in t_setting:
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT )
+                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT )
                     else:
-                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT )
+                        glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT )
 
             else:
                 raise ValueError( "texture_dict missing texture!!!" )
@@ -254,8 +266,6 @@ class Geometry():
             ## Check to see if the values of all texel coordinates are between 0 and 1.
             test_bool = True
             for i in current_texels:
-                ## Kind of hacky, but some texture coordinates were clearly given wrong values.
-                #if i > 1.02 or i < -0.032:
                 if i > 1 or i < 0:
                     test_bool = False
                     break
@@ -266,7 +276,7 @@ class Geometry():
                 current_parent = getattr( self, 'texture_enable_group_' + str( self.layer_dict[ current_layer ] ) )
                 current_group = TextureBindGroup( current_texture, current_parent )
 
-                ## Next, we have to convert our original texel coordinates to the coordinates of the texture region.
+                ## Next, we have to convert our original texel coordinates to the coordinates of the texture region within the atlas.
                 region_tex_coords = current_texture.tex_coords
                 region_s_min = region_tex_coords[ 0 ]
                 region_s_max = region_tex_coords[ 3 ]
@@ -323,7 +333,7 @@ class Geometry():
 
         current_layer = painting.layer
 
-        for each_gfx_draw_list in gfx_display_dict[ painting.normal_dl ]:
+        for each_gfx_draw_list in self.gfx_display_dict[ painting.normal_dl ]:
             self.add_drawlist_to_batch( each_gfx_draw_list, current_layer, transformation_matrix )
 
 
@@ -331,8 +341,8 @@ class Geometry():
     def add_waterbox_to_batch( self, waterbox, area_offset ):
         current_layer = 'LAYER_TRANSPARENT_INTER'
 
-        if texture_dict.get( waterbox.texture ) is not None:
-            texture_filename = texture_dict[ waterbox.texture ]
+        if self.texture_dict.get( waterbox.texture ) is not None:
+            texture_filename = self.texture_dict[ waterbox.texture ]
             if self.texture_group_dict.get( texture_filename ):
                 current_texture_info = self.texture_group_dict[ texture_filename ]
                 current_texture = current_texture_info[ 0 ]
@@ -340,12 +350,6 @@ class Geometry():
                 t_scale = current_texture_info[ 2 ]
                 s_setting = current_texture_info[ 3 ]
                 t_setting = current_texture_info[ 4 ]
-
-                ## Could this be the cause of the funny looking red sand texture in ssl?
-                """
-                if gfx_draw_list.render_settings.texture_settings[ 9 ] != s_setting or gfx_draw_list.render_settings.texture_settings[ 6 ] != t_setting:
-                    print( "Using texture with wrong overflow behavior!", gfx_draw_list.render_settings.current_texture )
-                """
 
                 current_parent = getattr( self, 'texture_enable_group_' + str( self.layer_dict[ current_layer ] ) )
                 current_group = TextureBindGroup( current_texture, current_parent )
@@ -382,7 +386,6 @@ class Geometry():
             t = ( 32 * waterbox.scale - 1.0 ) * math.cos( rot_offset[ i ] * math.pi  / 32768 )
             current_texels += [ s, t ]
 
-            #current_colours += [ 255, 255, 255, waterbox.alpha ]
             current_colours += waterbox.colour
 
 
@@ -403,5 +406,3 @@ class Geometry():
     def add_movtex_tri_to_batch( self, each_movtex_obj, current_area_offset ):
         transformation_matrix = util_math.translate_mat( current_area_offset[ 0 ], current_area_offset[ 1 ], current_area_offset[ 2 ] )
         self.add_drawlist_to_batch( each_movtex_obj.drawlist, each_movtex_obj.layer, transformation_matrix )
-
-
