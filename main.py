@@ -237,7 +237,7 @@ class Button():
         self.top = self.center_y + self.height / 2
 
 
-class Menu():
+class Menu( pyglet.event.EventDispatcher ):
 
     def __init__( self, menu_title_text, game_window, font=None ):
         self.game_window = game_window
@@ -264,7 +264,6 @@ class Menu():
         self.hovered_button = None
         self.clicked_button = None
         self.buttons = []
-        ## Quad to darken whole screen
         self.menu_title_text = pyglet.text.Label( menu_title_text, font_name=self.font, font_size=self.title_font_size, x=self.game_window.width//2, y=self.font_y, anchor_x='center', anchor_y='center', batch=self.batch, group=self.background_group )
 
 
@@ -331,13 +330,13 @@ class IntroMenu( Menu ):
                 ## Then a button was clicked and released on, so we perform the relevant action.
 
                 if self.clicked_button == self.level_select_button:
-                    self.game_window.pause_menu.enter_submenu( self.game_window.pause_menu.level_select_menu )
+                    self.dispatch_event( 'enter_submenu', 'level_select_menu' )
 
                 if self.clicked_button == self.options_button:
-                    self.game_window.pause_menu.enter_submenu( self.game_window.pause_menu.options_menu )
+                    self.dispatch_event( 'enter_submenu', 'options_menu' )
 
                 if self.clicked_button == self.quit_button:
-                    self.game_window.on_close()
+                    self.dispatch_event( 'exit_game' )
 
             self.clicked_button.set_release()
             self.clicked_button = None
@@ -373,13 +372,13 @@ class MainPauseMenu( Menu ):
                 ## Then a button was clicked and released on, so we perform the relevant action.
 
                 if self.clicked_button == self.level_select_button:
-                    self.game_window.pause_menu.enter_submenu( self.game_window.pause_menu.level_select_menu )
+                    self.dispatch_event( 'enter_submenu', 'level_select_menu' )
 
                 if self.clicked_button == self.options_button:
-                    self.game_window.pause_menu.enter_submenu( self.game_window.pause_menu.options_menu )
+                    self.dispatch_event( 'enter_submenu', 'options_menu' )
 
                 if self.clicked_button == self.quit_button:
-                    self.game_window.on_close()
+                    self.dispatch_event( 'exit_game' )
 
             self.clicked_button.set_release()
             self.clicked_button = None
@@ -410,7 +409,6 @@ class OptionsMenu( Menu ):
         self.mouse_sensitivity_slider = Slider( 50, 1, 100, self.game_window.width, self.game_window.height, center_x = 1/2, center_y=self.slider_2_y, width=2/3, height=1/9, num_digits=0, text="Mouse Sensitivity", font=self.font, text_font_size=self.slider_font_size, val_font_size=self.slider_val_font_size, batch=self.batch, foreground_group=self.foreground_group, background_group=self.background_group )
 
         ## Back button
-        #self.back_button = Button( self.game_window.width, self.game_window.height, center_x=7/8, center_y=1/6, width=1/9, height=1/6, text='Back', font_size=self.font_size, batch=self.batch, foreground_group=self.foreground_group, background_group=self.background_group )
         self.back_button = Button( self.game_window.width, self.game_window.height, center_x=1/8, center_y=6/7, width=1/9, height=1/6, text='Back', font=self.font, font_size=self.font_size, batch=self.batch, foreground_group=self.foreground_group, background_group=self.background_group )
 
         ## Button list ( also includes Sliders )
@@ -424,15 +422,10 @@ class OptionsMenu( Menu ):
             if self.hovered_button.check_click( x, y ):
                 self.clicked_button = self.hovered_button
                 if self.clicked_button == self.fov_slider:
-                    game_window.fov = ( self.fov_slider.current_val )
-                    try:
-                        game_window.skybox.skybox_set_fov( self.fov_slider.current_val )
-                    except:
-                        ## Then no skybox has been created yet.
-                        pass
+                    self.dispatch_event( 'set_fov', self.fov_slider.current_val )
+
                 if self.clicked_button == self.mouse_sensitivity_slider:
-                    game_window.mouse_sensitivity = game_window.percent_to_sensitivity( self.mouse_sensitivity_slider.current_val )
-                    game_window.set_mouse_sensitivity( game_window.mouse_sensitivity )
+                    self.dispatch_event( 'set_mouse_sensitivity', self.mouse_sensitivity_slider.current_val )
 
 
     def check_release( self, x, y ):
@@ -441,34 +434,23 @@ class OptionsMenu( Menu ):
                 ## Then a button was clicked and released on, so we perform the relevant action.
                 ## Toggle wireframe button.
                 if self.clicked_button == self.wireframe_button:
-                    if self.game_window.wireframe == False:
-                        self.game_window.wireframe = True
-                        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
-                        glDisable( GL_DEPTH_TEST )
-                        glDisable( GL_ALPHA_TEST )
-                        glDisable( GL_BLEND )
-                    else:
-                        self.game_window.wireframe = False
-                        glPolygonMode( GL_FRONT_AND_BACK, GL_FILL )
-                        glEnable( GL_DEPTH_TEST )
-                        glEnable( GL_ALPHA_TEST )
-                        glEnable( GL_BLEND )
+                    self.dispatch_event( 'toggle_wireframe' )
 
                 ## Toggle textures button.
                 if self.clicked_button == self.textures_button:
-                    self.game_window.toggle_textures()
+                    self.dispatch_event( 'toggle_textures' )
 
                 ## Toggle skyboxes button.
                 if self.clicked_button == self.skybox_button:
-                    self.game_window.toggle_bool( 'load_skyboxes' )
+                    self.dispatch_event( 'toggle_skyboxes' )
 
                 ## Toggle fps button.
                 if self.clicked_button == self.fps_button:
-                    self.game_window.toggle_bool( 'show_fps' )
+                    self.dispatch_event( 'toggle_fps' )
 
                 ## Back to the previous menu button.
                 if self.clicked_button == self.back_button:
-                        self.game_window.pause_menu.go_back()
+                    self.dispatch_event( 'go_back' )
 
             self.clicked_button.set_release()
             self.clicked_button = None
@@ -483,19 +465,11 @@ class OptionsMenu( Menu ):
             self.hovered_button.change_slider_pos( x )
             self.hovered_button.set_current_val()
 
-            ## Update game_window and other objects with new values.
             if self.hovered_button == self.fov_slider:
-                game_window.fov = self.fov_slider.current_val
-                try:
-                    game_window.skybox.skybox_set_fov( self.fov_slider.current_val )
-                except:
-                    ## Then no skybox has been created yet.
-                    pass
+                self.dispatch_event( 'set_fov', self.fov_slider.current_val )
 
             elif self.hovered_button == self.mouse_sensitivity_slider:
-                game_window.mouse_sensitivity = game_window.percent_to_sensitivity( self.mouse_sensitivity_slider.current_val )
-                game_window.set_mouse_sensitivity( game_window.mouse_sensitivity )
-
+                self.dispatch_event( 'set_mouse_sensitivity', self.mouse_sensitivity_slider.current_val )
 
 
 
@@ -545,16 +519,14 @@ class LevelSelectMenu( Menu ):
 
                 ## Back to the previous menu button.
                 if self.clicked_button == self.back_button:
-                    self.game_window.pause_menu.go_back()
+                    self.dispatch_event( 'go_back' )
 
                 elif self.page == 1 and self.clicked_button == self.next_button:
-                    self.game_window.pause_menu.enter_submenu( self.game_window.pause_menu.level_select_menu_2 )
+                    self.dispatch_event( 'enter_submenu', 'level_select_menu_2' )
 
                 ## Buttons to load levels
-                ## Only load levels with a single area for now.
-                #elif hasattr( self.clicked_button, 'level' ) and self.clicked_button.areas == 1:
                 elif hasattr( self.clicked_button, 'level' ):
-                    self.game_window.load_new_level( self.clicked_button.level )
+                    self.dispatch_event( 'load_new_level', self.clicked_button.level )
 
             self.clicked_button.set_release()
             self.clicked_button = None
@@ -583,16 +555,13 @@ class PauseMenu():
         self.menu_stack = [ self.intro_menu ]
 
 
-        self.event_dispatcher = pyglet.event.EventDispatcher()
-        #self.event_dispatcher.register_event_type( 'on_pause' )
-
-
     def go_back( self ):
         self.menu_stack.pop()
         self.current_menu = self.menu_stack[ -1 ]
 
 
-    def enter_submenu( self, menu ):
+    def enter_submenu( self, menu_name ):
+        menu = getattr( self, menu_name )
         self.current_menu = menu
         self.menu_stack.append( menu )
 
@@ -717,7 +686,9 @@ class GameWindow( pyglet.window.Window ):
         self.camera = FirstPersonCamera( y_inv=self.y_inv )
 
         ## Create menus.
+        self.register_menu_event_types()
         self.pause_menu = PauseMenu( self, font=self.font )
+        self.set_menu_handlers()
 
         ## Load intro.
         self.in_intro = True
@@ -755,24 +726,12 @@ class GameWindow( pyglet.window.Window ):
             glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR )
 
 
-    def toggle_bool( self, attribute ):
-        if getattr( self, attribute ) == False:
-            setattr( self, attribute, True )
-        else:
-            setattr( self, attribute, False )
-
-
-    def toggle_textures( self ):
-        self.toggle_bool( 'load_textures' )
-        self.level_geometry.toggle_group_textures( self.load_textures )
-
-
     def set_start_pos( self ):
         self.start_area, self.start_yaw, *self.start_pos = self.level_geometry.level_scripts[ self.current_level ].mario_pos
         for i in range( 3 ):
             self.start_pos[ i ] = -1 * self.start_pos[ i ]
 
-        ## We'll load inside the floor if we don't add some height.  But because the camera has negative coordinates, we actually subtract 300 to add 300 height.
+        ## We'll load partially inside the floor if we don't add some height.  But because the camera has negative coordinates, we actually subtract 300 to add 300 height.
         self.start_pos[ 1 ] -= 300
 
 
@@ -824,7 +783,7 @@ class GameWindow( pyglet.window.Window ):
             if self.paused == True:
                 self.paused = False
                 self.set_exclusive_mouse( True )
-                ## Stop PauseMenu from receiving user input and instead send the input to game_window.camera's input_handler.
+                ## Stop PauseMenu from receiving user input and instead send the input to the camera's input_handler.
                 self.pop_handlers()
                 self.push_handlers( self.camera.input_handler )
                 self.pause_menu.current_menu = self.pause_menu.main_pause_menu
@@ -847,20 +806,6 @@ class GameWindow( pyglet.window.Window ):
                     self.push_handlers( self.pause_menu )
 
             return True
-
-
-    def sensitivity_to_percent( self, sensitivity ):
-        """For user experience, the mouse sensitivity slider goes from 1 to 100.  However, the actual mouse sensitivity used will vary from self.min_mouse_sensitivity (corresponds to 1) to self.max_mouse_sensitivity (corresponds to 100).  This function takes an actual sensitivity value and converts it to a number between 1 and 100 inclusive."""
-        return ( ( ( sensitivity - self.min_mouse_sensitivity ) / ( self.max_mouse_sensitivity - self.min_mouse_sensitivity ) ) * 99 + 1 )
-
-
-    def percent_to_sensitivity( self, percent ):
-        """For user experience, the mouse sensitivity slider goes from 1 to 100.  However, the actual mouse sensitivity used will vary from self.min_mouse_sensitivity (corresponds to 1) to self.max_mouse_sensitivity (corresponds to 100).  This function takes a number between 1 and 100 inclusive and converts it to the actual mouse sensitivity used."""
-        return ( ( ( percent - 1 ) / 99 ) * ( self.max_mouse_sensitivity - self.min_mouse_sensitivity ) + self.min_mouse_sensitivity )
-
-
-    def set_mouse_sensitivity( self, sensitivity ):
-        self.camera.mouse_sensitivity = sensitivity
 
 
     def on_draw( self ):
@@ -910,21 +855,107 @@ class GameWindow( pyglet.window.Window ):
             self.camera.update( dt )
 
 
-    """
+    def register_menu_event_types( self ):
+        ## Button Events
+        Menu.register_event_type( 'exit_game' )
+        Menu.register_event_type( 'go_back' )
+        Menu.register_event_type( 'enter_submenu' )
+        LevelSelectMenu.register_event_type( 'load_new_level' )
+        OptionsMenu.register_event_type( 'toggle_skyboxes' )
+        OptionsMenu.register_event_type( 'toggle_wireframe' )
+        OptionsMenu.register_event_type( 'toggle_textures' )
+        OptionsMenu.register_event_type( 'toggle_fps' )
+        ## Slider Events
+        OptionsMenu.register_event_type( 'set_fov' )
+        OptionsMenu.register_event_type( 'set_mouse_sensitivity' )
+
+
+    def set_menu_handlers( self ):
+        ## OptionsMenu Buttons
+        self.pause_menu.options_menu.set_handler( 'toggle_skyboxes', self.toggle_skyboxes )
+        self.pause_menu.options_menu.set_handler( 'toggle_wireframe', self.toggle_wireframe )
+        self.pause_menu.options_menu.set_handler( 'toggle_textures', self.toggle_textures )
+        self.pause_menu.options_menu.set_handler( 'toggle_fps', self.toggle_fps )
+        self.pause_menu.options_menu.set_handler( 'go_back', self.pause_menu.go_back )
+        ## OptionsMenu Sliders
+        self.pause_menu.options_menu.set_handler( 'set_fov', self.set_fov )
+        self.pause_menu.options_menu.set_handler( 'set_mouse_sensitivity', self.set_mouse_sensitivity )
+
+        ## IntroMenu
+        self.pause_menu.intro_menu.set_handler( 'exit_game', self.exit_game )
+        self.pause_menu.intro_menu.set_handler( 'enter_submenu', self.pause_menu.enter_submenu )
+
+        ## MainPauseMenu
+        self.pause_menu.main_pause_menu.set_handler( 'exit_game', self.exit_game )
+        self.pause_menu.main_pause_menu.set_handler( 'enter_submenu', self.pause_menu.enter_submenu )
+
+        ## LevelSelectMenu
+        self.pause_menu.level_select_menu.set_handler( 'load_new_level', self.load_new_level )
+        self.pause_menu.level_select_menu.set_handler( 'go_back', self.pause_menu.go_back )
+        self.pause_menu.level_select_menu.set_handler( 'enter_submenu', self.pause_menu.enter_submenu )
+        self.pause_menu.level_select_menu_2.set_handler( 'load_new_level', self.load_new_level )
+        self.pause_menu.level_select_menu_2.set_handler( 'go_back', self.pause_menu.go_back )
+        self.pause_menu.level_select_menu_2.set_handler( 'enter_submenu', self.pause_menu.enter_submenu )
+
+
+    def exit_game( self ):
+        self.on_close()
+
+
+    def toggle_bool( self, attribute ):
+        if getattr( self, attribute ) == False:
+            setattr( self, attribute, True )
+        else:
+            setattr( self, attribute, False )
+
+
+    def toggle_textures( self ):
+        self.toggle_bool( 'load_textures' )
+        self.level_geometry.toggle_group_textures( self.load_textures )
+
+
+    def toggle_wireframe( self ):
+        if self.wireframe == False:
+            self.wireframe = True
+            glPolygonMode( GL_FRONT_AND_BACK, GL_LINE )
+            glDisable( GL_DEPTH_TEST )
+            glDisable( GL_ALPHA_TEST )
+            glDisable( GL_BLEND )
+        else:
+            self.wireframe = False
+            glPolygonMode( GL_FRONT_AND_BACK, GL_FILL )
+            glEnable( GL_DEPTH_TEST )
+            glEnable( GL_ALPHA_TEST )
+            glEnable( GL_BLEND )
+
+
+    def toggle_fps( self ):
+        self.toggle_bool( 'show_fps' )
+
+
+    def toggle_skyboxes( self ):
+        self.toggle_bool( 'load_skyboxes' )
+
+
     def set_fov( self, fov ):
-        print( 'here2' )
         self.fov = fov
-        self.skybox.skybox_set_fov( self.fov )
+        if hasattr( self, 'skybox' ):
+            self.skybox.skybox_set_fov( self.fov )
 
 
-    def on_pause( self ):
-        print( 'here' )
-    """
+    def percent_to_sensitivity( self, percent ):
+        """For user experience, the mouse sensitivity slider goes from 1 to 100.  However, the actual mouse sensitivity used will vary from self.min_mouse_sensitivity (corresponds to 1) to self.max_mouse_sensitivity (corresponds to 100).  This function takes a number between 1 and 100 inclusive and converts it to the actual mouse sensitivity used."""
+        return ( ( ( percent - 1 ) / 99 ) * ( self.max_mouse_sensitivity - self.min_mouse_sensitivity ) + self.min_mouse_sensitivity )
+
+
+    def set_mouse_sensitivity( self, sensitivity ):
+        self.mouse_sensitivity = self.percent_to_sensitivity( sensitivity )
+        self.camera.mouse_sensitivity = self.mouse_sensitivity
 
 
     def on_resize( self, width, height ):
         glViewport( 0, 0, width, height )
-        if self.paused:
+        if hasattr( self, 'pause_menu' ):
             self.pause_menu.on_screen_resize( width, height )
 
 
