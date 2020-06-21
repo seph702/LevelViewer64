@@ -9,7 +9,7 @@ except:
     print( "Please install pyglet for python.  This project uses pyglet for windowing and as an OpenGL wrapper.  You can install it using:\npip install pyglet\n" )
     sys.exit()
 assert LooseVersion( pyglet.version ) > LooseVersion( '1.5.4' ), "pyglet must be at least version 1.5.4.  Please upgrade your version of pyglet."
-assert LooseVersion( pyglet.version ) != LooseVersion( '1.5.6' ), "pyglet 1.5.6 is a broken release and cannot run this program.  Please either upgrade to a newer version of pyglet if available or downgrade to 1.5.5."
+assert LooseVersion( pyglet.version ) != LooseVersion( '1.5.6' ), "pyglet 1.5.6 is a broken release and cannot run this program.  Please either upgrade to a newer version of pyglet or downgrade to 1.5.5."
 
 try:
     import PIL
