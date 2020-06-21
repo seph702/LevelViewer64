@@ -1,3 +1,3 @@
-pyglet
-Pillow
-numpy
+pyglet==1.5.5
+Pillow==5.1.0
+numpy==1.18.1
