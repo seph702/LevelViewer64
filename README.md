@@ -28,15 +28,48 @@ Level Viewer 64 is an unofficial fan project.  **No official assets are included
 
 #### Use [sm64 decomp](https://github.com/n64decomp/sm64) to Parse the Textures
 
-Follow the installation instructions on the [sm64 decomp](https://github.com/n64decomp/sm64) page: install all requirements, clone that repository, place a Super Mario 64 baserom (US Version) in the root directory, name it properly, and then run either `make` or `python3 extract_assets.py us` from that project to dump the texture assets from the US version of your Super Mario 64 ROM.
+Follow the installation instructions on the [sm64 decomp](https://github.com/n64decomp/sm64) page: install requirements for your platform, clone that repository, place a Super Mario 64 baserom (US Version) in the root directory, name it properly, and then run either `make` or `python3 extract_assets.py us` from that project to dump the texture assets from the US version of your Super Mario 64 ROM.
 
 Note: running `make` will also recompile a byte-perfect ROM from the dumped textures and source code.  The recompilation is fairly time consuming.  If you only want to extract texures, just run the `extract_assets.py` script.
 
 #### Run Level Viewer 64
 
-Once textures have been dumped, git clone this project.  Then run `python3 setup.py`.  You will be prompted to enter the path to the source code directory with the dumped textures.  After entering the source code directory and `setup.py` completes, simply run `python3 main.py`.
+1. Once textures have been dumped, clone this project: `git clone https://github.com/seph702/LevelViewer64.git`
+1. Install requirement: Python3
+1. `pip install numpy Pillow pyglet`
+1. Run `python3 setup.py`.  You will be prompted to enter the path to the source code directory with the dumped textures.  After doing so, setup will take a minute to run.
+1. Run `python3 main.py`
 
 Note: if you move the source code directory on your filesystem, you will have to run `setup.py` again and give it the new directory.  This is because `main.py` reads the textures directly out of the source code directory rather than copying them.
+
+### Help
+
+```
+usage: main.py [-h] [-fs] [-res x y] [-msaa samples] [-yinv]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -fs, --fullscreen     enable fullscreen mode
+  -res x y, --resolution x y
+                        resolution of the game window (default: 1280x720)
+  -msaa samples         number of MSAA samples per pixel (default: 1)
+  -yinv, --invert_y     invert the y-axis on the mouse
+```
+
+Example usages:
+
+`python3 main.py -fs -msaa 16`
+
+`python3 main.py -res 1920 1080`
+
+`python3 main.py -yinv -fs -msaa 4`
+
+View command line help:
+
+`python3 main.py -h`
+
+Note: the default is 1280x720 resolution with no MSAA.  16x MSAA is the ideal way to play and most modern GPUs support it.  However, if you experience graphical or gameplay issues, try reducing MSAA until the game works properly.
+
 
 
 ### Controls
@@ -86,13 +119,13 @@ Level Viewer 64 uses text parsing to read through the sm64 decomp source code.  
 - Sizes of Piranha Plants and Koopas in Tiny Huge Island are wrong.
 - The Ukiki model (in Tall Tall Mountain) doesn't display correctly.  This is caused by incomplete Geo parsing.
 - Colours are slightly wrong in a few places leading to undesired graphics behavior like with the eyes of Boos and Penguins.  The Nintendo 64 colour combiner is surprisingly customizable while legacy OpenGL's is not.
-- Some objects are missing.  Everything has been fully parsed out of the level scripts, so anything that is still missing is loaded in Mario 64 source code by object behavior functions.  These behaviors functions cannot be parsed and so would have to be manually read, understood, and reimplemented one by one.
+- Some objects are missing.  Everything has been fully parsed out of the level scripts, so anything that is still missing is loaded in Mario 64 source code by object behavior functions.  These behavior functions cannot be parsed and so would have to be manually read, understood, and reimplemented one by one.
 - The red deathpit sand in Shifting Sand Land looks wrong?
 
 
 ### Known Nonissues
 
-- Some objects are in strange places.  There are signs and Bob-ombs floating in the air and Goombas and 1-up mushrooms partially in the ground.  Level Viewer 64 accurately displays how objects are placed in the Mario 64 source code.  For all of these objects, their behavior functions in the original source code check collision and make the object fall to the ground.  So when a level is loaded, a sign might be floating in the air, but a frame later, it is in its normal spot on the ground.
+- Some objects are in strange places.  There are signs and Bob-ombs floating in the air and Goombas and 1-up mushrooms partially in the ground.  Level Viewer 64 accurately displays where objects are placed by the Mario 64 source code.  For all of these objects, their behavior functions in the original source code check collision and make the object fall to the ground.  So when a level is loaded, a sign might be floating in the air, but a frame later, it is in its normal spot on the ground.
 
 
 ### Future Work?
@@ -115,6 +148,8 @@ Thanks to the [sm64 decomp](https://github.com/n64decomp/sm64) project for manua
 
 Thanks to the developers of [pyglet](http://pyglet.org/).  "pyglet is a powerful, yet easy to use Python library for developing games and other visually-rich applications on Windows, Mac OS X and Linux. It supports windowing, user interface event handling, Joysticks, OpenGL graphics, loading images and videos, and playing sounds and music. All of this with a friendly Pythonic API, that's simple to learn and doesn't get in your way."  pyglet was a great way for me to learn graphics programming and I also recommend it for fast prototyping of graphics applications.  The developers were also very helpful and answered a bunch of my questions.
 
-Thanks to [aztecwarrior28](https://fontstruct.com/fontstructors/1606234/aztecwarrior28) for the [fan-made font](https://fontstruct.com/fontstructions/show/1770031/super-mario-64-8).
-
 Thanks to Michelle for beta testing and for the programming discussions.
+
+Thanks also to Timmy for beta testing.
+
+Thanks to [aztecwarrior28](https://fontstruct.com/fontstructors/1606234/aztecwarrior28) for the [fan-made font](https://fontstruct.com/fontstructions/show/1770031/super-mario-64-8).

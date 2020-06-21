@@ -1,7 +1,7 @@
-import math
 import pyglet
-import pickle
 from pyglet.gl import *
+import math
+import pickle
 
 from parsers.level_script_parser import LevelScript, LevelGeo, LevelGeoDisplayList, Area, Obj, WaterBox
 from parsers.level_fixes import get_extra_scale
@@ -184,8 +184,6 @@ class Geometry():
 
             for each_gfx_draw_list in self.gfx_display_dict[ each_geo_dl.dl_name ]:
                 ## Values in gfx_draw_dict are GfxDrawLists, which have attributes render_settings, positions, triangles, texel_coordinates, and colors.
-                if each_geo_dl.billboard and current_layer != 'LAYER_ALPHA' and each_gfx_draw_list.render_settings.geometry_mode[ 'G_LIGHTING' ] == True:
-                    print( each_geo_dl.dl_name, each_geo_dl.layer, each_gfx_draw_list.render_settings.geometry_mode )
                 self.add_drawlist_to_batch( each_gfx_draw_list, current_layer, transformation_mat )
 
 

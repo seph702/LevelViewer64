@@ -9,6 +9,7 @@ except:
     print( "Please install pyglet for python.  This project uses pyglet for windowing and as an OpenGL wrapper.  You can install it using:\npip install pyglet\n" )
     sys.exit()
 assert LooseVersion( pyglet.version ) > LooseVersion( '1.5.4' ), "pyglet must be at least version 1.5.4.  Please upgrade your version of pyglet."
+assert LooseVersion( pyglet.version ) != LooseVersion( '1.5.6' ), "pyglet 1.5.6 is a broken release and cannot run this program.  Please either upgrade to a newer version of pyglet or downgrade to 1.5.5."
 
 try:
     import PIL
@@ -38,7 +39,7 @@ from parsers import movtex_tri_parser
 
 mario_source_dir = Path( '' )
 while not os.path.isfile( mario_source_dir / 'extract_assets.py' ):
-    mario_source_dir = Path( input( 'Please enter the path of the sm64 source code directory.  This is the directory in which extract_assets.py is located.\nFor Windows, the path should be formatted like the following example:\nC:/Users/Me/mario\n(Note the direction of the slashes.)\n\nFor Linux, the path be formatted like the following example:\n/home/Me/mario\n\n>' ) )
+    mario_source_dir = Path( input( 'Please enter the path of the sm64 source code directory.  This is the directory in which extract_assets.py is located.\nFor Windows, the path should be formatted like the following example:\nC:/Users/Me/mario\n(Note the direction of the slashes.)\n\nFor Linux, the path should be formatted like the following example:\n/home/Me/mario\n\n>' ) )
 
 if not os.path.isfile( mario_source_dir / 'textures' / 'skyboxes' / 'water.png' ):
     print( "Located the sm64 source directory, however textures are missing.  Please run the extract_assets.py script in that directory on your US version baserom." )

@@ -1,9 +1,11 @@
 import pyglet
 from pyglet.gl import *
 import ctypes
+import time
+import os
 import math
 
-
+import util_math
 from skybox import Skybox
 from camera import FirstPersonCamera
 from geometry import Geometry
@@ -11,43 +13,51 @@ from menus import Button, Slider, Menu, PauseMenu, IntroMenu, MainPauseMenu, Opt
 
 
 class GameWindow( pyglet.window.Window ):
-    """Main game class.  Contains main game parameters as well as the level geometry, camera, level batch ( for the drawing of levels ), object batch ( for the drawing of objects ), and fps display."""
-    def __init__( self, mario_graphics_dir, fullscreen=False, y_inv=False, vsync=False, resizable=True, load_textures=True, wireframe=False, load_skyboxes=True, original_res=False, show_fps=False, font=None ):
+    """Main game class.  Contains main game parameters as well as the level geometry, camera, level batch (for the drawing of levels and objects), and fps display."""
+    def __init__( self, mario_graphics_dir, fullscreen=False, resolution=None, y_inv=False, vsync=False, msaa=1, resizable=True, show_fps=False, font=None ):
         self.mario_graphics_dir = mario_graphics_dir
+        self.screenshot_dir = mario_graphics_dir / 'screenshots'
+        os.makedirs( self.screenshot_dir, exist_ok=True )
 
         self.y_inv = y_inv
         self.fov = 45
-        self.load_textures = load_textures
         self.font = font
-        self.wireframe = wireframe
         self.paused = False
         self.full_res = fullscreen
-        self.original_res = original_res
-        self.load_skyboxes = load_skyboxes
+        self.resolution = resolution
         self.current_level = None
         self.mouse_sensitivity = 0.08
         self.min_mouse_sensitivity = 0.01
         self.max_mouse_sensitivity = 0.15143
 
-        ## Implements MSAA.
-        screen = pyglet.canvas.get_display().get_default_screen()
-        template = pyglet.gl.Config( sample_buffers=1, samples=16 )
-        try:
-            config = screen.get_best_config( template )
-        except:
-            config = None
+        ## Graphics setings
+        self.wireframe = False
+        self.load_textures = True
+        self.load_skyboxes = True
 
-        ## Set screen resolution.
+        ## MSAA.
+        config = self.get_config( msaa )
+
+        ## Set screen resolution and window border type.
         self.max_x_res = pyglet.canvas.get_display().get_default_screen().width
         self.max_y_res = pyglet.canvas.get_display().get_default_screen().height
         self.set_resolution()
+        border_style = self.get_border_style( fullscreen )
 
-        super().__init__( self.x_res, self.y_res, "Mario 64", resizable=resizable, vsync=vsync, fullscreen=fullscreen, config=config )
+        ## Init pyglet window.
+        super().__init__( self.x_res, self.y_res, "Mario 64", resizable=resizable, vsync=vsync, fullscreen=False, config=config, style=border_style )
 
-        self.set_exclusive_mouse( False )
+        if fullscreen:
+            self.set_location( 0, 0 )
 
+        ## Set mouse.
+        self.exclusive_mouse = False
+        self.set_exclusive_mouse( self.exclusive_mouse )
+
+        ## Set OpenGL state.
         self.set_opengl_state()
 
+        ## Geometry
         self.level_geometry = Geometry( self.mario_graphics_dir )
         self.level_geometry.toggle_group_textures( self.load_textures )
         self.skybox_dict = { 'wdw':'wdw', 'ttm':'water', 'thi':'water', 'ddd':'water', 'hmc':None, 'bits':'bits', 'ccm':'ccm', 'pss':None, 'jrb':'clouds', 'rr':'cloud_floor', 'bitfs':'bitfs', 'cotmc':None, 'bowser_1':'bidw', 'wmotr':'cloud_floor', 'ttc':None, 'lll':'bitfs', 'totwc':'cloud_floor', 'wf':'cloud_floor', 'ssl':'ssl', 'sa':'cloud_floor', 'vcutm':None, 'bob':'water', 'castle_courtyard':'water', 'sl':'ccm', 'bitdw':'bidw', 'bbh':'bbh', 'castle_inside':None, 'bowser_3':'bits', 'bowser_2':'bitfs', 'castle_grounds':'water' }
@@ -82,12 +92,35 @@ class GameWindow( pyglet.window.Window ):
             self.x_res = self.max_x_res
             self.y_res = self.max_y_res
         else:
-            if self.original_res:
-                self.x_res = 320
-                self.y_res = 240
-            else:
-                self.x_res = 1280
-                self.y_res = 720
+            self.x_res, self.y_res = self.resolution
+            if self.x_res > self.max_x_res:
+                self.x_res = self.max_x_res
+            if self.y_res > self.max_y_res:
+                self.y_res = self.max_y_res
+
+
+    def get_border_style( self, fullscreen ):
+        if fullscreen:
+            border_style = pyglet.window.Window.WINDOW_STYLE_BORDERLESS
+        else:
+            border_style = pyglet.window.Window.WINDOW_STYLE_DEFAULT
+
+        return border_style
+
+
+    def get_config( self, msaa ):
+        if msaa > 1:
+            screen = pyglet.canvas.get_display().get_default_screen()
+            template = pyglet.gl.Config( sample_buffers=1, samples=msaa )
+            try:
+                config = screen.get_best_config( template )
+            except:
+                config = None
+
+        else:
+            config = None
+
+        return config
 
 
     def set_opengl_state( self ):
@@ -97,6 +130,7 @@ class GameWindow( pyglet.window.Window ):
         else:
             glPolygonMode( GL_FRONT_AND_BACK, GL_FILL )
             glEnable( GL_DEPTH_TEST )
+            glDepthMask( GL_TRUE )
             material_reflectance = ( ctypes.c_float * 4 )( *( 1.0, 1.0, 1.0, 1.0 ) )
             light_direction = ( ctypes.c_float * 4 )( *( 1 / math.sqrt( 3 ), 1 / math.sqrt( 3 ), 1 / math.sqrt( 3 ), 0.0 ) )
             glLightfv( GL_LIGHT0, GL_POSITION, light_direction )
@@ -128,7 +162,8 @@ class GameWindow( pyglet.window.Window ):
     def load_new_level( self, level, areas=True ):
         if self.in_intro:
             self.in_intro = False
-            self.set_exclusive_mouse( True )
+            self.exclusive_mouse = True
+            self.set_exclusive_mouse( self.exclusive_mouse )
             self.pop_handlers()
             self.push_handlers( self.camera.input_handler )
         self.current_level = level
@@ -151,7 +186,7 @@ class GameWindow( pyglet.window.Window ):
             time_str = time.strftime( "%Y_%m_%d_%H%M%S", time.localtime() ) + '.png'
             buf = ( GLubyte * ( 4 * self.width * self.height ) )( 0 )
             glReadPixels( 0, 0, self.width, self.height, GL_RGBA, GL_UNSIGNED_BYTE, buf )
-            with open( str( ( screenshot_dir / time_str ).resolve() ), 'wb' ) as f:
+            with open( str( ( self.screenshot_dir / time_str ).resolve() ), 'wb' ) as f:
                 f.write( util_math.write_png( bytearray( buf ), self.width, self.height ) )
             return True
 
@@ -159,32 +194,22 @@ class GameWindow( pyglet.window.Window ):
     def on_key_press( self, symbol, modifiers ):
         ## Pause/unpause the game.
         if symbol == pyglet.window.key.ESCAPE:
-            if self.paused == True:
-                self.paused = False
-                self.set_exclusive_mouse( True )
-                ## Stop PauseMenu from receiving user input and instead send the input to the camera's input_handler.
-                self.pop_handlers()
-                self.push_handlers( self.camera.input_handler )
-                self.pause_menu.current_menu = self.pause_menu.main_pause_menu
-                self.pause_menu.menu_stack = [ self.pause_menu.main_pause_menu ]
-
-            elif self.paused == False:
-                if self.in_intro == True:
-                    self.in_intro = False
-                    self.set_exclusive_mouse( True )
-                    self.pop_handlers()
-                    self.push_handlers( self.camera.input_handler )
-
-                else:
-                    self.paused = True
-                    self.set_exclusive_mouse( False )
-                    self.set_mouse_position( int( self.width / 2 ), int( self.height / 2 ) )
-                    self.pop_handlers()
-                    self.pause_menu.current_menu = self.pause_menu.main_pause_menu
-                    self.pause_menu.menu_stack = [ self.pause_menu.main_pause_menu ]
-                    self.push_handlers( self.pause_menu )
-
+            self.pause_game()
             return True
+
+
+    def on_resize( self, width, height ):
+        glViewport( 0, 0, width, height )
+        if hasattr( self, 'pause_menu' ):
+            self.pause_menu.on_screen_resize( width, height )
+
+
+    def on_activate( self ):
+        self.set_exclusive_mouse( self.exclusive_mouse )
+
+
+    def on_deactivate( self ):
+        self.set_exclusive_mouse( False )
 
 
     def on_draw( self ):
@@ -218,9 +243,11 @@ class GameWindow( pyglet.window.Window ):
         ## Draw the actual level.
         self.level_batch.draw()
 
+        ## Draw the menu, if applicable.
         if self.paused or self.in_intro:
             self.pause_menu.draw()
     
+        ## Draw the FPS display, if applicable.
         if self.show_fps:
             if self.wireframe:
                 glPolygonMode( GL_FRONT_AND_BACK, GL_FILL )
@@ -277,6 +304,36 @@ class GameWindow( pyglet.window.Window ):
         self.pause_menu.level_select_menu_2.set_handler( 'enter_submenu', self.pause_menu.enter_submenu )
 
 
+    def pause_game( self ):
+        if self.paused == True:
+            self.paused = False
+            self.exclusive_mouse = True
+            self.set_exclusive_mouse( self.exclusive_mouse )
+            ## Stop PauseMenu from receiving user input and instead send the input to the camera's input_handler.
+            self.pop_handlers()
+            self.push_handlers( self.camera.input_handler )
+            self.pause_menu.current_menu = self.pause_menu.main_pause_menu
+            self.pause_menu.menu_stack = [ self.pause_menu.main_pause_menu ]
+
+        elif self.paused == False:
+            if self.in_intro == True:
+                self.in_intro = False
+                self.exclusive_mouse = True
+                self.set_exclusive_mouse( self.exclusive_mouse )
+                self.pop_handlers()
+                self.push_handlers( self.camera.input_handler )
+
+            else:
+                self.paused = True
+                self.exclusive_mouse = False
+                self.set_exclusive_mouse( self.exclusive_mouse )
+                self.set_mouse_position( int( self.width / 2 ), int( self.height / 2 ) )
+                self.pop_handlers()
+                self.pause_menu.current_menu = self.pause_menu.main_pause_menu
+                self.pause_menu.menu_stack = [ self.pause_menu.main_pause_menu ]
+                self.push_handlers( self.pause_menu )
+
+
     def exit_game( self ):
         self.on_close()
 
@@ -331,11 +388,5 @@ class GameWindow( pyglet.window.Window ):
     def set_mouse_sensitivity( self, sensitivity ):
         self.mouse_sensitivity = self.percent_to_sensitivity( sensitivity )
         self.camera.mouse_sensitivity = self.mouse_sensitivity
-
-
-    def on_resize( self, width, height ):
-        glViewport( 0, 0, width, height )
-        if hasattr( self, 'pause_menu' ):
-            self.pause_menu.on_screen_resize( width, height )
 
 
