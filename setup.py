@@ -8,7 +8,7 @@ try:
 except:
     print( "Please install pyglet for python.  This project uses pyglet for windowing and as an OpenGL wrapper.  You can install it using:\npip install pyglet\n" )
     sys.exit()
-assert LooseVersion( pyglet.version ) > LooseVersion( '1.5.4' ), "pyglet must be at least version 1.5.4.  Please upgrade your version of pyglet."
+assert LooseVersion( pyglet.version ) >= LooseVersion( '1.5.4' ), "pyglet must be at least version 1.5.4.  Please upgrade your version of pyglet."
 assert LooseVersion( pyglet.version ) != LooseVersion( '1.5.6' ), "pyglet 1.5.6 is a broken release and cannot run this program.  Please either upgrade to a newer version of pyglet or downgrade to 1.5.5."
 
 try:
@@ -48,7 +48,6 @@ if not os.path.isfile( mario_source_dir / 'textures' / 'skyboxes' / 'water.png' 
 mario_graphics_dir = Path( os.path.realpath( __file__ ) ).parent
 parser_dir = mario_graphics_dir / 'parsers'
 pickle_dir = mario_graphics_dir / 'pickles'
-
 
 
 print( "Beginning setup.\n" )
