@@ -88,7 +88,7 @@ def get_name( source ):
 
     ind = equal_ind
 
-    while ind > 0:
+    while ind >= 0:
         if source[ ind ] == '\n' or ind == 0:
             start_ind = ind
             break
@@ -590,7 +590,7 @@ def main( mario_source_dir, mario_graphics_dir ):
             local_anim_source_dict = {}
             for each_struct in anim_structs:
                 assert get_name( each_struct ) != -1, "The animation struct contains no name."
-                if 'animindex' in each_struct or 'animvalue' in each_struct or 'Animation' in each_struct:
+                if 'animindex' in each_struct or 'animvalue' in each_struct or 'AnimIndex' in each_struct or 'AnimValue' in each_struct or 'Animation' in each_struct:
                     local_anim_source_dict[ get_name( each_struct ) ] = each_struct
     
             ## Pass through the file again and this time look for the pointer to the Animation array.

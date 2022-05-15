@@ -82,12 +82,14 @@ def make_texture_dictionary( mario_source_dir ):
             except:
                 continue
     
-        match_str1 = 'ALIGNED8 const u8 '
-        match_str2 = 'ALIGNED8 static const u8 '
-        match_str3 = 'ALIGNED8 static u8 '
+        match_str1 = 'ALIGNED8 const Texture '
+        match_str2 = 'ALIGNED8 static const Texture '
+        match_str3 = 'ALIGNED8 static Texture '
+        match_str4 = 'const Texture '
         m1_len = len( match_str1 )
         m2_len = len( match_str2 )
         m3_len = len( match_str3 )
+        m4_len = len( match_str4 )
     
         i = 0
         while i < len( source ):
@@ -95,8 +97,9 @@ def make_texture_dictionary( mario_source_dir ):
             check1 = source[ i : i + m1_len ] == match_str1
             check2 = source[ i : i + m2_len ] == match_str2
             check3 = source[ i : i + m3_len ] == match_str3
+            check4 = source[ i : i + m4_len ] == match_str4
     
-            if check1 or check2 or check3:
+            if check1 or check2 or check3 or check4:
                 end_name = source.find( '[', i )
                 if check1:
                     texture_name = source[ i + m1_len : end_name ]
@@ -106,6 +109,9 @@ def make_texture_dictionary( mario_source_dir ):
     
                 if check3:
                     texture_name = source[ i + m3_len : end_name ]
+
+                if check4 and not check1:
+                    texture_name = source[ i + m4_len : end_name ]
     
                 start_texture_file = source.find( '"', end_name ) + 1
                 end_texture_file = source.find( '"', start_texture_file + 1 )
