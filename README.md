@@ -32,6 +32,8 @@ Follow the installation instructions on the [sm64 decomp](https://github.com/n64
 
 Note: running `make` will also recompile a byte-perfect ROM from the dumped textures and source code.  The recompilation is fairly time consuming.  If you only want to extract texures, just run the `extract_assets.py` script.
 
+IMPORTANT NOTE: the code in sm64 is still changing slowly.  The original (1.0) commit of this project worked on sm64 up through at least refresh 10.  Further updates to sm64 broke two of LevelViewer64's parsers.  This most current version properly parses refresh 15.  If it breaks again in the future and you still want to use this project, you can always [download](https://github.com/n64decomp/sm64/archive/1372ae1bb7cbedc03df366393188f4f05dcfc422.zip) refresh 15 of sm64 directly from their repository.  Once you've extracted sm64's source code, follow their directions as usual to install requirements, place a properly named baserom in the directory, and finally run sm64's asset extraction script.
+
 #### Run Level Viewer 64
 
 1. Once textures have been dumped, clone this project: `git clone https://github.com/seph702/LevelViewer64.git`
